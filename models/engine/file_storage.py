@@ -12,24 +12,23 @@ class FileStorage:
         """Returns a dictionary of models currently in storage"""
         if cls is None:
             return FileStorage.__objects
-        cls_name = cls.__name__
-        dictionary = {}
-        for key in self.__objects.keys():
-            if key.split('.')[0] == cls_name:
-                dictionary[key] = self.__objects[key]
-        return dictionary
+        else:
+            filtered_objects = {}
+            for key, obj in FileStorage.__objects.items():
+                if isinstance(obj, cls):
+                    filtered_objects[key] = obj
+            return filtered_objects
 
     def new(self, obj):
         """Adds new object to storage dictionary"""
-        self.__objects.update(
-            {obj.to_dict()['__class__'] + '.' + obj.id: obj})
+        key = "{}.{}".format(obj.__class__.__name__, obj.id)
+        self.__objects[key] = obj
 
     def save(self):
         """Saves storage dictionary to file"""
         with open(FileStorage.__file_path, 'w') as f:
             temp = {}
-            temp.update(FileStorage.__objects)
-            for key, val in temp.items():
+            for key, val in FileStorage.__objects.items():
                 temp[key] = val.to_dict()
             json.dump(temp, f)
 
@@ -53,16 +52,15 @@ class FileStorage:
             with open(FileStorage.__file_path, 'r') as f:
                 temp = json.load(f)
                 for key, val in temp.items():
-                    self.all()[key] = classes[val['__class__']](**val)
+                    cls_name, obj_id = key.split(".")
+                    cls = classes[val['__class__']]
+                    self.__objects[key] = cls(**val)
         except FileNotFoundError:
             pass
 
     def delete(self, obj=None):
-        """Method to delete obj from __objects"""
+        """Deletes obj from __objects if it exists"""
         if obj is not None:
-            del self.__objects[obj.__class__.__name__ + '.' + obj.id]
-            self.save()
-
-    def close(self):
-        """Function that executes after saving"""
-        self.reload()
+            key = "{}.{}".format(obj.__class__.__name__, obj.id)
+            if key in self.__objects:
+                del self.__objects[key]
