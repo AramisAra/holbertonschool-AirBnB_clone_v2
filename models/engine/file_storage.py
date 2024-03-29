@@ -8,27 +8,21 @@ class FileStorage:
     __file_path = 'file.json'
     __objects = {}
 
-    def delete(self, obj=None):
-        """Deletes obj from __objects if it exists"""
-        if obj is not None:
-            key = obj.__class__.__name__ + '.' + obj.id
-            if key in FileStorage.__objects:
-                del FileStorage.__objects[key]
-
     def all(self, cls=None):
         """Returns a dictionary of models currently in storage"""
-        if cls is not None:
-            cls_dict = {}
-            cls_key = cls.__name__
-            for k, v in FileStorage.__objects.items():
-                if k.startswith(cls_key):
-                    cls_dict[k] = v
-            return cls_dict
-        return FileStorage.__objects
+        if cls is None:
+            return FileStorage.__objects
+        cls_name = cls.__name__
+        dictionary = {}
+        for key in self.__objects.keys():
+            if key.split('.')[0] == cls_name:
+                dictionary[key] = self.__objects[key]
+        return dictionary
 
     def new(self, obj):
         """Adds new object to storage dictionary"""
-        self.all().update({obj.to_dict()['__class__'] + '.' + obj.id: obj})
+        self.__objects.update(
+            {obj.to_dict()['__class__'] + '.' + obj.id: obj})
 
     def save(self):
         """Saves storage dictionary to file"""
@@ -62,3 +56,13 @@ class FileStorage:
                     self.all()[key] = classes[val['__class__']](**val)
         except FileNotFoundError:
             pass
+
+    def delete(self, obj=None):
+        """Method to delete obj from __objects"""
+        if obj is not None:
+            del self.__objects[obj.__class__.__name__ + '.' + obj.id]
+            self.save()
+
+    def close(self):
+        """Function that executes after saving"""
+        self.reload()
