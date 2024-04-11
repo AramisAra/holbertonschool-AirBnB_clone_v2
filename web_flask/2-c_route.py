@@ -23,24 +23,15 @@ def hbnb():
     """
     return 'HBNB'
 
-@app.route('/c/is_fun', strict_slashes=False)
-def is_fun():
+@app.route('/c/<text>', strict_slashes=False)
+def is_fun(text):
     """
     Returns a string indicating that C is fun.
 
     Returns:
         str: A string indicating that C is fun.
     """
-    return 'C is fun'
-
-@app.route('/c/cool', strict_slashes=False)
-def cool():
-    """
-    Returns a string 'C cool' when the '/c/cool' route is accessed.
-    Returns:
-        A string 'C cool'
-    """
-    return 'C cool'
+    return 'C ' + text.replace("_", " ")
 
 if __name__ == '__main__':
     app.url_map.strict_slashes = False
